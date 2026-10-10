@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLTA Maintenance Dashboard</title>
+
+<style>
+:root {
+  --green: #14532d;
+  --light: #f3f6f4;
+  --white: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--light);
+  color: var(--text);
+}
+header {
+  background: var(--green);
+  color: white;
+  padding: 22px 28px;
+}
+header h1 { margin: 0 0 7px; font-size: 24px; }
+header p { margin: 0; opacity: .85; font-size: 13px; }
+.layout { display: flex; min-height: calc(100vh - 90px); }
+nav {
+  width: 220px;
+  background: white;
+  padding: 20px 12px;
+  border-right: 1px solid var(--border);
+}
+nav button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  padding: 13px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+}
+nav button.active, nav button:hover {
+  background: #dcfce7;
+  color: var(--green);
+}
+main { flex: 1; padding: 26px; min-width: 0; }
+h2 { margin-top: 0; }
+.subtitle { color: var(--muted); font-size: 14px; }
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin: 22px 0;
+}
+.card, .panel {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+}
+.card span { color: var(--muted); font-size: 13px; }
+.card strong { display: block; font-size: 29px; margin-top: 12px; }
+.panel { margin-bottom: 20px; }
+.panel h3 { margin-top: 0; font-size: 16px; }
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+input, select {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  font: inherit;
+  max-width: 100%;
+}
+.btn {
+  background: var(--green);
+  color: white;
+  border: 0;
+  padding: 10px 15px;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.btn:hover { opacity: .9; }
+.table-wrap { overflow-x: auto; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+}
+th, td {
+  text-align: left;
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--border);
+}
+th { background: #f9fafb; }
+.status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+.normal, .done { background: #dcfce7; color: #166534; }
+.monitor { background: #fef3c7; color: #92400e; }
+.progress { background: #dbeafe; color: #1d4ed8; }
+.open { background: #f3f4f6; color: #374151; }
+.hidden { display: none !important; }
+footer {
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+  padding: 20px;
+}
+@media(max-width: 900px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  nav { width: 175px; }
+  main { padding: 18px; }
+}
+@media(max-width: 600px) {
+  .layout { display: block; }
+  nav {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    padding: 8px;
+  }
+  nav button { min-width: 125px; }
+  main { padding: 14px; }
+  header { padding: 20px 16px; }
+  .cards { gap: 9px; }
+  .card { padding: 13px; }
+  .card strong { font-size: 24px; }
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>⚙ PLTA Maintenance</h1>
+  <p>Dashboard Monitoring Pemeliharaan Mekanik Turbin</p>
+</header>
+
+<div class="layout">
+<nav>
+  <button class="active" data-page="dashboard">▦ Dashboard</button>
+  <button data-page="monitoring">◉ Monitoring Unit</button>
+  <button data-page="pekerjaan">☷ Pekerjaan</button>
+</nav>
+
+<main>
+<section id="dashboard">
+  <h2>Dashboard Utama</h2>
+  <p class="subtitle">Ringkasan kondisi unit dan pekerjaan pemeliharaan.</p>
+
+  <div class="cards">
+    <div class="card"><span>Total Unit</span><strong id="totalUnit">3</strong></div>
+    <div class="card"><span>Kondisi Normal</span><strong id="totalNormal">2</strong></div>
+    <div class="card"><span>Perlu Monitoring</span><strong id="totalMonitor">1</strong></div>
+    <div class="card"><span>Pekerjaan Aktif</span><strong id="totalAktif">2</strong></div>
+  </div>
+
+  <div class="panel">
+    <h3>Status Unit Turbin</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Unit</th><th>Tekanan Akumulator</th>
+          <th>Temperatur Oli</th><th>Kondisi</th>
+        </tr></thead>
+        <tbody id="ringkasanUnit"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Pekerjaan Terbaru</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tanggal</th><th>Pekerjaan</th><th>Unit</th><th>Status</th></tr></thead>
+        <tbody id="ringkasanPekerjaan"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="monitoring" class="hidden">
+  <h2>Monitoring Unit</h2>
+  <p class="subtitle">Masukkan hasil pemeriksaan aktual setiap unit.</p>
+
+  <div class="panel">
+    <form id="formUnit">
+      <div class="toolbar">
+        <select id="unit" required>
+          <option value="Unit 1">Unit 1</option>
+          <option value="Unit 2">Unit 2</option>
+          <option value="Unit 3">Unit 3</option>
+        </select>
+        <input id="tekanan" type="number" min="0" step="0.1"
+          placeholder="Tekanan (bar)" required>
+        <input id="temperatur" type="number" min="0" step="0.1"
+          placeholder="Temperatur (°C)" required>
+        <select id="kondisi">
+          <option value="Normal">Normal</option>
+          <option value="Monitoring">Perlu Monitoring</option>
+        </select>
+        <button class="btn" type="submit">Simpan Data</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Unit</th><th>Tekanan (bar)</th>
+          <th>Temperatur (°C)</th><th>Kondisi</th>
+        </tr></thead>
+        <tbody id="tabelUnit"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="pekerjaan" class="hidden">
+  <h2>Data Pekerjaan</h2>
+  <p class="subtitle">Catat dan pantau progres pemeliharaan mekanik.</p>
+
+  <div class="panel">
+    <form id="formKerja">
+      <div class="toolbar">
+        <input id="namaKerja" placeholder="Nama pekerjaan" required>
+        <select id="unitKerja">
+          <option>Unit 1</option><option>Unit 2</option><option>Unit 3</option>
+        </select>
+        <select id="statusKerja">
+          <option>Open</option><option>Progress</option><option>Selesai</option>
+        </select>
+        <button class="btn" type="submit">+ Tambah</button>
+      </div>
+    </form>
+    <input id="cari" placeholder="Cari nama pekerjaan atau unit..."
+      style="width:100%">
+  </div>
+
+  <div class="panel">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Tanggal</th><th>Pekerjaan</th><th>Unit</th><th>Status</th>
+        </tr></thead>
+        <tbody id="tabelKerja"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<footer>
+  PLTA Maintenance Dashboard · Versi Demo
+</footer>
+
+<script>
+const dataAwalUnit = [
+  {unit:"Unit 1", tekanan:27, temperatur:36, kondisi:"Normal"},
+  {unit:"Unit 2", tekanan:27, temperatur:40, kondisi:"Normal"},
+  {unit:"Unit 3", tekanan:27, temperatur:38, kondisi:"Monitoring"}
+];
+
+const dataAwalKerja = [
+  {tanggal:"2026-10-10", nama:"Pemeriksaan sistem pendingin", unit:"Unit 1", status:"Progress"},
+  {tanggal:"2026-10-10", nama:"Pemeriksaan shaft seal", unit:"Unit 2", status:"Open"},
+  {tanggal:"2026-10-09", nama:"Pembersihan filter air kotor", unit:"Unit 3", status:"Selesai"}
+];
+
+// Data demo disimpan pada browser perangkat ini.
+let unitData = bacaData("plta_unit", dataAwalUnit);
+let kerjaData = bacaData("plta_kerja", dataAwalKerja);
+
+function bacaData(kunci, nilaiAwal) {
+  try {
+    const hasil = localStorage.getItem(kunci);
+    return hasil ? JSON.parse(hasil) : nilaiAwal;
+  } catch {
+    return nilaiAwal;
+  }
+}
+
+function simpan() {
+  localStorage.setItem("plta_unit", JSON.stringify(unitData));
+  localStorage.setItem("plta_kerja", JSON.stringify(kerjaData));
+}
+
+function aman(teks) {
+  return String(teks).replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
+function kelasStatus(status) {
+  if (status === "Normal" || status === "Selesai") return "normal";
+  if (status === "Monitoring") return "monitor";
+  if (status === "Progress") return "progress";
+  return "open";
+}
+
+function labelStatus(status) {
+  return status === "Monitoring" ? "Perlu Monitoring" : status;
+}
+
+function renderUnit() {
+  const baris = unitData.map(u => `
+    <tr>
+      <td>${aman(u.unit)}</td>
+      <td>${Number(u.tekanan).toFixed(1)}</td>
+      <td>${Number(u.temperatur).toFixed(1)}</td>
+      <td><span class="status ${kelasStatus(u.kondisi)}">
+        ${aman(labelStatus(u.kondisi))}
+      </span></td>
+    </tr>`).join("");
+
+  document.getElementById("tabelUnit").innerHTML = baris;
+  document.getElementById("ringkasanUnit").innerHTML = baris;
+
+  document.getElementById("totalUnit").textContent = unitData.length;
+  document.getElementById("totalNormal").textContent =
+    unitData.filter(u => u.kondisi === "Normal").length;
+  document.getElementById("totalMonitor").textContent =
+    unitData.filter(u => u.kondisi === "Monitoring").length;
+}
+
+function renderKerja() {
+  const cari = (document.getElementById("cari")?.value || "").toLowerCase();
+
+  const daftar = kerjaData.filter(k =>
+    (k.nama + " " + k.unit + " " + k.status).toLowerCase().includes(cari)
+  );
+
+  const baris = daftar.map(k => `
+    <tr>
+      <td>${aman(k.tanggal)}</td>
+      <td>${aman(k.nama)}</td>
+      <td>${aman(k.unit)}</td>
+      <td><span class="status ${kelasStatus(k.status)}">
+        ${aman(k.status)}
+      </span></td>
+    </tr>`).join("");
+
+  document.getElementById("tabelKerja").innerHTML = baris ||
+    '<tr><td colspan="4">Data tidak ditemukan.</td></tr>';
+
+  document.getElementById("ringkasanPekerjaan").innerHTML =
+    kerjaData.slice(-5).reverse().map(k => `
+      <tr>
+        <td>${aman(k.tanggal)}</td>
+        <td>${aman(k.nama)}</td>
+        <td>${aman(k.unit)}</td>
+        <td><span class="status ${kelasStatus(k.status)}">
+          ${aman(k.status)}
+        </span></td>
+      </tr>`).join("");
+
+  document.getElementById("totalAktif").textContent =
+    kerjaData.filter(k => k.status !== "Selesai").length;
+}
+
+document.querySelectorAll("nav button").forEach(tombol => {
+  tombol.addEventListener("click", () => {
+    document.querySelectorAll("main section").forEach(bagian =>
+      bagian.classList.add("hidden")
+    );
+    document.getElementById(tombol.dataset.page).classList.remove("hidden");
+
+    document.querySelectorAll("nav button").forEach(b =>
+      b.classList.remove("active")
+    );
+    tombol.classList.add("active");
+  });
+});
+
+document.getElementById("formUnit").addEventListener("submit", e => {
+  e.preventDefault();
+
+  const unit = document.getElementById("unit").value;
+  const tekanan = Number(document.getElementById("tekanan").value);
+  const temperatur = Number(document.getElementById("temperatur").value);
+  const kondisi = document.getElementById("kondisi").value;
+
+  const lama = unitData.findIndex(u => u.unit === unit);
+  const baru = {unit, tekanan, temperatur, kondisi};
+
+  if (lama >= 0) unitData[lama] = baru;
+  else unitData.push(baru);
+
+  simpan();
+  renderUnit();
+  e.target.reset();
+});
+
+document.getElementById("formKerja").addEventListener("submit", e => {
+  e.preventDefault();
+
+  kerjaData.push({
+    tanggal: new Date().toLocaleDateString("en-CA"),
+    nama: document.getElementById("namaKerja").value.trim(),
+    unit: document.getElementById("unitKerja").value,
+    status: document.getElementById("statusKerja").value
+  });
+
+  simpan();
+  renderKerja();
+  e.target.reset();
+});
+
+document.getElementById("cari").addEventListener("input", renderKerja);
+
+renderUnit();
+renderKerja();
+</script>
+</body>
+</html>
